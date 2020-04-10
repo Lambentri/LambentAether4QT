@@ -21,7 +21,7 @@
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tabMain">
        <attribute name="icon">
@@ -152,10 +152,10 @@
        <widget class="QWidget" name="verticalLayoutWidget_2">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>751</width>
-          <height>521</height>
+          <x>10</x>
+          <y>10</y>
+          <width>731</width>
+          <height>511</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="linkHolder">
@@ -170,26 +170,30 @@
            <property name="widgetResizable">
             <bool>true</bool>
            </property>
-           <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
+           <widget class="QWidget" name="scrollAreaWidgetLinks">
             <property name="geometry">
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>745</width>
-              <height>507</height>
+              <width>725</width>
+              <height>497</height>
              </rect>
             </property>
-            <widget class="QWidget" name="verticalLayoutWidget">
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>50</y>
-               <width>741</width>
-               <height>461</height>
-              </rect>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <property name="sizeConstraint">
+              <enum>QLayout::SetMaximumSize</enum>
              </property>
-             <layout class="QVBoxLayout" name="linkHolderLayout"/>
-            </widget>
+             <item>
+              <layout class="QVBoxLayout" name="linkHolderLayout">
+               <property name="sizeConstraint">
+                <enum>QLayout::SetMaximumSize</enum>
+               </property>
+              </layout>
+             </item>
+            </layout>
            </widget>
           </widget>
          </item>
