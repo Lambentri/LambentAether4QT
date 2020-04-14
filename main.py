@@ -619,6 +619,8 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
         except ApplicationError:
             print("missing remote machine component")
 
+        return
+
     def machine_write(self):
         print("machine_write")
         # clear widget
