@@ -12,6 +12,9 @@ build-osx:
     - fbs installer
   only:
     - master
+  artifacts:
+    expose_as: 'build_darwin'
+    paths: ['target/Lambent4Qt.dmg']
 
 build-win:
   stage: build
