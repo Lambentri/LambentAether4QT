@@ -1,0 +1,21 @@
+
+build-osx:
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - fbs installer
+  only:
+    - master
+
+build-win:
+  stage: build
+  tags:
+    - arm64
+  script:
+    - docker build --network host --pull  -t "$CI_REGISTRY_IMAGE" .
+    - docker push "$CI_REGISTRY_IMAGE"
+  only:
+    - master
+

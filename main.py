@@ -1,13 +1,10 @@
 from argparse import ArgumentParser
-from argparse import ArgumentTypeError
 from datetime import datetime
-from random import randint
 from sys import argv
 from functools import partial
 from typing import Dict, List, Callable
 
 from PyQt5 import QtGui, QtCore, QtWidgets
-from autobahn.twisted import wamp
 from autobahn.twisted.wamp import ApplicationSession
 from autobahn.twisted.wamp import ApplicationRunner
 from autobahn.wamp import ApplicationError
@@ -178,20 +175,105 @@ class DeviceListHeader(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         label_row_layout = QHBoxLayout()
-        # label_row_layout.addWidget(QLabel(""))
+
         label_row_layout.addWidget(QLabel("IP"))
         label_row_layout.addWidget(QLabel("Name"))
+        label_row_layout.addWidget(QLabel(""))
         self.setLayout(label_row_layout)
 
 
-class DeviceListLayout(QWidget):
-    def __init__(self, device: Device, *args, **kwargs):
+class DeviceListControls(QWidget):
+    device: Device
+
+    def __init__(self, device: Device, session: ApplicationSession, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.device = device
+        self.session = session
+
+        layout = QHBoxLayout()
+
+        pm_rename = QPixmap('imgs/rename-box.png')
+        pic_rename = QLabel()
+        pic_rename.setToolTip("Rename")
+        pic_rename.setPixmap(pm_rename)
+        pic_rename.mousePressEvent = self.on_rename
+        layout.addWidget(pic_rename)
+
+        pm_poke = QPixmap("imgs/flash-alert.png")
+        pic_poke = QLabel()
+        pic_poke.setToolTip("Poke")
+        pic_poke.setPixmap(pm_poke)
+        pic_poke.mousePressEvent = self.on_poke
+        layout.addWidget(pic_poke)
+
+        self.setLayout(layout)
+
+    def on_rename(self, event):
+        dialog = DeviceNameDialog(self.device, session=self.session)
+        dialog.exec()
+
+    @inlineCallbacks
+    def _on_poke(self):
+        yield self.session.call(
+            "com.lambentri.edge.la4.device.82667777.poke",
+            shortname=self.device.iname
+        )
+
+    def on_poke(self, event):
+        print("poke")
+        self._on_poke()
+        print("qqq")
+        return
+
+
+class DeviceListLayout(QWidget):
+    device: Device
+
+    def __init__(self, device: Device, session: ApplicationSession, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.device = device
+        self.session = session
 
         layout = QHBoxLayout()
         layout.addWidget(QLabel(device.iname))
         layout.addWidget(QLabel(device.name))
+        layout.addWidget(DeviceListControls(device, session))
+
         self.setLayout(layout)
+
+class DeviceNameDialog(QDialog):
+    def __init__(self, device: Device, session: 'LambentSessionWindow', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.device = device
+        self.session = session
+
+        self.setWindowTitle("Name It")
+
+        self.layout = QHBoxLayout()
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.line_edit = QLineEdit()
+        self.layout.addWidget(self.line_edit)
+
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    @inlineCallbacks
+    def accept(self):
+        if self.line_edit.text() == "":
+            return
+
+        yield self.session.call(
+            "com.lambentri.edge.la4.device.82667777.name",
+                                shortname=self.device.iname,
+                                nicename=self.line_edit.text()
+                                )
+        self.session.device_list[self.device.id].name = self.line_edit.text()
+        super().accept()
 
 
 class MachineListHeader(QWidget):
@@ -371,7 +453,7 @@ class LinkListControls(QWidget):
         ## New Button
         pm_plus = QIcon('imgs/plus.png')
         self.newButton = QPushButton()
-        self.newButton.setToolTip("New Machine")
+        self.newButton.setToolTip("New Link")
         self.newButton.setIcon(pm_plus)
         self.newButton.clicked.connect(self.new_button_clicked)
         layout.addWidget(self.newButton)
@@ -564,7 +646,8 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             self.deviceHolderLayout.itemAt(item).widget().deleteLater()
         # redraw
         for item in self.device_list.values():
-            self.deviceHolderLayout.addWidget(DeviceListLayout(item))
+            this_item = DeviceListLayout(item, self)
+            self.deviceHolderLayout.addWidget(this_item)
 
     def link_listener(self, links: Dict[str, str], sinks: List, srcs: List):
         # print(sinks)
@@ -586,9 +669,10 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             self.linkHolderLayout.addWidget(LinkListLayout(item))
 
     def pressed_new_link_dialog(self, event):
-        print("clicky")
+        print("clicky-new-link")
         dialog = LinkCreateDialog(self.generate_name_callable, session=self)
         dialog.exec()
+
 
     @inlineCallbacks
     def generate_name_callable(self):
