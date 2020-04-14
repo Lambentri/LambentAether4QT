@@ -1,5 +1,8 @@
 
 build-osx:
+  stage: build
+  tags:
+    - darwin
   script:
     - python3 -m venv venv
     - . venv/bin/activate
@@ -12,7 +15,7 @@ build-osx:
 build-win:
   stage: build
   tags:
-    - arm64
+    - win64
   script:
     - docker build --network host --pull  -t "$CI_REGISTRY_IMAGE" .
     - docker push "$CI_REGISTRY_IMAGE"
