@@ -612,7 +612,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
     def machine_check(self):
         print("machine_check")
         try:
-            machine_list_and_enums: Dict[str: Dict] = yield self.call("com.lambentri.edge.la4.machine.list")
+            machine_list_and_enums: Dict[str, Dict] = yield self.call("com.lambentri.edge.la4.machine.list")
             machine_list = machine_list_and_enums['machines']
             for machine_id, spec in machine_list.items():
                 self.machine_list[machine_id] = Machine(**spec)
