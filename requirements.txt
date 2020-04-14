@@ -1,18 +1,24 @@
 aenum==2.2.3
+altgraph==0.17
 attrs==19.3.0
 autobahn==20.3.1
 Automat==20.2.0
 cffi==1.14.0
 constantly==15.1.0
 cryptography==2.8
-# dataclasses==0.6
+fbs==0.8.6
+future==0.18.2
 hyperlink==19.0.0
 idna==2.9
 incremental==17.5.0
+macholib==1.14
+pefile==2019.4.18
 pycparser==2.20
 PyHamcrest==2.0.2
+PyInstaller==3.4
 PyQt5==5.14.1
 PyQt5-sip==12.7.1
+PyQt5-stubs==5.14.2.0
 qt5reactor==0.6
 Quamash==0.6.1
 six==1.14.0
