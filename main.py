@@ -21,10 +21,12 @@ import qt5reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import task
 
+from config_ui import Ui_Dialog
 from main_ui import Ui_MainWindow
 
 from dataclasses import dataclass, asdict
 from aenum import Enum
+import configparser
 
 
 class TickEnum(Enum):
@@ -241,6 +243,7 @@ class DeviceListLayout(QWidget):
 
         self.setLayout(layout)
 
+
 class DeviceNameDialog(QDialog):
     def __init__(self, device: Device, session: 'LambentSessionWindow', *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -269,9 +272,9 @@ class DeviceNameDialog(QDialog):
 
         yield self.session.call(
             "com.lambentri.edge.la4.device.82667777.name",
-                                shortname=self.device.iname,
-                                nicename=self.line_edit.text()
-                                )
+            shortname=self.device.iname,
+            nicename=self.line_edit.text()
+        )
         self.session.device_list[self.device.id].name = self.line_edit.text()
         super().accept()
 
@@ -285,11 +288,12 @@ class MachineListHeader(QWidget):
         layout.addWidget(QLabel("Type"))
         layout.addWidget(QLabel("Ticks"))
         layout.addWidget(QLabel("Status"))
-        layout.addWidget(QLabel("iname"))
+        layout.addWidget(QLabel("Name"))
+        layout.addWidget(QLabel())
         self.setLayout(layout)
 
 
-class MachineSpeedLayout(QWidget):
+class MachineControlSpeedLayout(QWidget):
     machine_plus = pyqtSignal(str)
     machine_minus = pyqtSignal(str)
 
@@ -379,23 +383,12 @@ class MachineListControls(QWidget):
         print("new_button_clicked")
 
 
-class LinkListHeader(QWidget):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        layout = QHBoxLayout()
-
-        layout.addWidget(QLabel("Name"))
-        layout.addWidget(QLabel("Source"))
-        layout.addWidget(QLabel("Target"))
-        self.setLayout(layout)
-
-
 class MachineListLayout(QWidget):
-    layout_speed: MachineSpeedLayout
+    layout_speed: MachineControlSpeedLayout
     machine: Machine
 
     machine_play_pause = pyqtSignal(str)
+    machine_rm = pyqtSignal(str)
 
     def __init__(self, machine: Machine, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -419,7 +412,7 @@ class MachineListLayout(QWidget):
         w_name = QLabel(machine.name)
         w_name.setToolTip(machine.desc)
         layout.addWidget(w_name)
-        self.layout_speed = MachineSpeedLayout(machine)
+        self.layout_speed = MachineControlSpeedLayout(machine)
         layout.addWidget(self.layout_speed)
 
         pic_running = QLabel()
@@ -436,11 +429,94 @@ class MachineListLayout(QWidget):
         iname.setToolTip(machine.id)
         layout.addWidget(iname)
 
+
+        pm_remove = QPixmap('imgs/close-thick.png')
+        pm_remove_painter = QPainter(pm_remove)
+        pm_remove_painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        pm_remove_painter.fillRect(pm_remove.rect(), QColor(0, 102, 202))
+        pm_remove_painter.end()
+
+        pic_remove = QLabel()
+        pic_remove.mousePressEvent = self.on_remove
+        pic_remove.setPixmap(pm_remove)
+        layout.addWidget(pic_remove)
+
         self.setLayout(layout)
 
     def on_running(self, event):
         print("running_a")
         self.machine_play_pause.emit(self.machine.id)
+
+    def on_remove(self, event):
+        self.machine_rm.emit(self.machine.id)
+
+class LinkListHeader(QWidget):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        layout = QHBoxLayout()
+
+        layout.addWidget(QLabel("Name"))
+        layout.addWidget(QLabel("Source"))
+        layout.addWidget(QLabel("Target"))
+        layout.addWidget(QLabel())
+        self.setLayout(layout)
+
+class LinkControlToggleLayout(QWidget):
+    link_toggle = pyqtSignal(str)
+    link_disable = pyqtSignal(str)
+    link_rm = pyqtSignal(str)
+
+    link: Link
+
+    def __init__(self, link: Link, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.link = link
+
+        layout = QHBoxLayout()
+
+        pm_remove = QPixmap('imgs/close-thick.png')
+        pm_remove_painter = QPainter(pm_remove)
+        pm_remove_painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        pm_remove_painter.fillRect(pm_remove.rect(), QColor(0, 102, 202))
+        pm_remove_painter.end()
+        pic_remove = QLabel()
+        pic_remove.mousePressEvent = self.on_remove
+        pic_remove.setPixmap(pm_remove)
+
+        layout.addWidget(pic_remove)
+
+        if link.active:
+            pm_switch = QPixmap('imgs/toggle-switch.png')
+        else:
+            pm_switch = QPixmap('imgs/toggle-switch-off.png')
+        pm_switch_painter = QPainter(pm_switch)
+        pm_switch_painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        if link.active:
+            pm_switch_painter.fillRect(pm_switch.rect(), QColor(0, 192, 0))
+        else:
+            pm_switch_painter.fillRect(pm_switch.rect(), QColor(255, 64, 0))
+        pm_switch_painter.end()
+        pic_switch = QLabel()
+        pic_switch.mousePressEvent = self.on_switch
+        pic_switch.setPixmap(pm_switch)
+
+        layout.addWidget(pic_switch)
+        
+
+
+
+
+        self.setLayout(layout)
+
+    def on_remove(self, event):
+        self.link_rm.emit(self.link.name)
+
+    def on_switch(self, event):
+        if self.link.active:
+            self.link_disable.emit(self.link.name)
+        else:
+            self.link_toggle.emit(self.link.name)
 
 
 class LinkListControls(QWidget):
@@ -479,6 +555,8 @@ class LinkListLayout(QWidget):
         layout.addWidget(QLabel(link.name))
         layout.addWidget(QLabel(link.full_spec['source']['listname']))
         layout.addWidget(QLabel(link.full_spec['target']['listname']))
+        self.layout_controls = LinkControlToggleLayout(link)
+        layout.addWidget(self.layout_controls)
 
         self.setLayout(layout)
 
@@ -514,6 +592,7 @@ class LinkCreateDialog(QDialog):
         self.name_box = GenericTextEntryWithButton("Name", QIcon("imgs/refresh.png"), "Generate", callable)
         self.layout.addWidget(self.name_box)
         self.layout.addWidget(self.buttonBox)
+
         self.setLayout(self.layout)
 
     @inlineCallbacks
@@ -612,7 +691,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
     def machine_check(self):
         print("machine_check")
         try:
-            machine_list_and_enums = yield self.call("com.lambentri.edge.la4.machine.list") # type: Dict[str, Dict]
+            machine_list_and_enums = yield self.call("com.lambentri.edge.la4.machine.list")  # type: Dict[str, Dict]
             machine_list = machine_list_and_enums['machines']
             for machine_id, spec in machine_list.items():
                 self.machine_list[machine_id] = Machine(**spec)
@@ -632,6 +711,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             this_item.layout_speed.machine_plus.connect(self.on_machine_plus)
             this_item.layout_speed.machine_minus.connect(self.on_machine_minus)
             this_item.machine_play_pause.connect(self.on_machine_play_pause)
+            this_item.machine_rm.connect(self.on_machine_remove)
             self.machineHolderLayout.addWidget(this_item)
 
     def device_listener(self, res: List[Dict[str, str]]):
@@ -668,13 +748,16 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             self.linkHolderLayout.itemAt(item).widget().deleteLater()
         # redraw
         for item in self.link_list.values():
-            self.linkHolderLayout.addWidget(LinkListLayout(item))
+            this_item = LinkListLayout(item)
+            this_item.layout_controls.link_rm.connect(self.on_link_rm)
+            this_item.layout_controls.link_disable.connect(self.on_link_disable)
+            this_item.layout_controls.link_toggle.connect(self.on_link_toggle)
+            self.linkHolderLayout.addWidget(this_item)
 
     def pressed_new_link_dialog(self, event):
         print("clicky-new-link")
         dialog = LinkCreateDialog(self.generate_name_callable, session=self)
         dialog.exec()
-
 
     @inlineCallbacks
     def generate_name_callable(self):
@@ -726,14 +809,49 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
 
     @inlineCallbacks
     def on_machine_play_pause(self, machine_id: str):
-        print("aus")
+        print("plpaus")
         yield self.call("com.lambentri.edge.la4.machine.pause", machine_id)
         yield self.machine_check()
         self.machine_write()
 
     @inlineCallbacks
+    def on_machine_remove(self, machine_id: str):
+        print("mach_rm")
+        yield self.call("com.lambentri.edge.la4.machine.rm", machine_id)
+        yield self.machine_check()
+        try:
+            del self.machine_list[machine_id]
+        except:
+            pass
+        self.machine_write()
+
+    @inlineCallbacks
     def on_machine_brightness_set(self, value: int):
         yield self.call("com.lambentri.edge.la4.machine.gb.set", value)
+
+    @inlineCallbacks
+    def on_link_toggle(self, link_id: str):
+        yield self.call("com.lambentri.edge.la4.links.toggle", link_id)
+
+    @inlineCallbacks
+    def on_link_disable(self, link_id: str):
+        yield self.call("com.lambentri.edge.la4.links.disable", link_id)
+        self.link_list[link_id].active = False
+
+    @inlineCallbacks
+    def on_link_rm(self, link_id: str):
+        yield self.call("com.lambentri.edge.la4.links.destroy", link_id)
+        try:
+            del self.link_list[link_id]
+        except:
+            raise
+
+class LambentConfigWindow(QMainWindow, Ui_Dialog):
+    def __init__(self, config=None):
+        QMainWindow.__init__(self)
+        ApplicationSession.__init__(self, config)
+
+        self.setupUi(self)
 
 
 def make(config):
@@ -754,9 +872,15 @@ def parse_args():
 
 
 def main():
+    config = configparser.ConfigParser()
+    config.read("config.ini")
     args = parse_args()
-
     app = QApplication(argv)
+    if not args.url or "url" in config:
+        print("missing config file/parmas")
+        return
+
+
     qt5reactor.install()
 
     runner = ApplicationRunner(args.url, u'realm1', extra=vars(args))
