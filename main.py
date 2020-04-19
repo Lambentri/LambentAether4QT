@@ -27,6 +27,7 @@ from main_ui import Ui_MainWindow
 from dataclasses import dataclass, asdict
 from aenum import Enum
 import configparser
+import os
 
 
 class TickEnum(Enum):
@@ -873,18 +874,22 @@ def parse_args():
 
 def main():
     config = configparser.ConfigParser()
-    config.read("config.ini")
+    config.read(os.path.expanduser("~/.la4.config.ini"))
+
     args = parse_args()
     app = QApplication(argv)
-    if not args.url or "url" in config:
-        print("missing config file/parmas")
-        return
-
-
     qt5reactor.install()
 
-    runner = ApplicationRunner(args.url, u'realm1', extra=vars(args))
-    runner.run(make)
+    if not args.url or not "url" in config.options("gui"):
+        print("missing config file/parmas")
+        return
+    elif "url" in "url" in config.options("gui"):
+        print("found config")
+        runner = ApplicationRunner(config.get("gui", "url"), u'realm1', extra=vars(args))
+        runner.run(make)
+    else:
+        runner = ApplicationRunner(args.url, u'realm1', extra=vars(args))
+        runner.run(make)
 
 
 if __name__ == '__main__':
