@@ -20,7 +20,8 @@ build-win:
   tags:
     - windows
   script:
-    # for starters: choco install vcbuildtools python3 pip
+    # for starters: choco install vcbuildtools
+    # and then choco install python --version=3.7.7
     # and choco install git --params "/GitAndUnixToolsOnPath"
     - py.exe -m venv venv
     - .\venv\Scripts\activate.bat
