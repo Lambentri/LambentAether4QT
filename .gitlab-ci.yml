@@ -1,4 +1,3 @@
-
 build-osx:
   stage: build
   tags:
@@ -19,10 +18,18 @@ build-osx:
 build-win:
   stage: build
   tags:
-    - win64
+    - windows
   script:
-    - docker build --network host --pull  -t "$CI_REGISTRY_IMAGE" .
-    - docker push "$CI_REGISTRY_IMAGE"
+    # for starters: choco install vcbuildtools python3 pip
+    # and choco install git --params "/GitAndUnixToolsOnPath"
+    - py.exe -m venv venv
+    - .\venv\Scripts\activate.bat
+    - pip install --upgrade pip wheel
+    - pip install -r requirements.txt
+    - fbs freeze --debug
+    - fbs installer
+    - dir target
+    
   only:
     - master
 
