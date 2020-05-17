@@ -23,7 +23,7 @@ build-win:
     # for starters: choco install vcbuildtools, vcredist2012,vcredist2012 -x86 add C:\Windows\SysWOW64\ to windows path and reboot
     # and then choco install python --version=3.7.7
     # and choco install git --params "/GitAndUnixToolsOnPath"
-    - C:\Python37\python.exe -m venv venv
+    - C:\Python36\python.exe -m venv venv
     - .\venv\Scripts\activate.bat
     - pip install --upgrade pip wheel
     - pip install -r requirements.txt
