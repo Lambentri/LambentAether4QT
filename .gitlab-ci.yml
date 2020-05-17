@@ -21,10 +21,11 @@ build-win:
     - windows
   script:
     # assumes you've run choco install python3 pip
+    # and choco install git --params "/GitAndUnixToolsOnPath"
     - py.exe -m venv venv
     - .\venv\Scripts\activate.bat
-    - pip-script.py install --upgrade pip
-    - pip-script.py install -r requirements.txt
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
     - fbs freeze --debug
     - fbs installer
     - dir target
