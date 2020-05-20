@@ -20,9 +20,10 @@ build-win:
   tags:
     - windows
   script:
-    # for starters: choco install vcbuildtools python3 pip
+    # for starters: choco install vcbuildtools, vcredist2012,vcredist2012 -x86 add C:\Windows\SysWOW64\ to windows path and reboot
+    # and then choco install python3 --version=3.6.8
     # and choco install git --params "/GitAndUnixToolsOnPath"
-    - py.exe -m venv venv
+    - C:\Python36\python.exe -m venv venv
     - .\venv\Scripts\activate.bat
     - pip install --upgrade pip wheel
     - pip install -r requirements.txt
