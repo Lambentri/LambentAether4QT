@@ -21,12 +21,12 @@
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="tabMain">
        <attribute name="icon">
         <iconset>
-         <normaloff>imgs/overview.png</normaloff>imgs/overview.png</iconset>
+         <normaloff>../../../../../../../.designer/backup/imgs/overview.png</normaloff>../../../../../../../.designer/backup/imgs/overview.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Overview</string>
@@ -35,7 +35,7 @@
       <widget class="QWidget" name="tabDevices">
        <attribute name="icon">
         <iconset>
-         <normaloff>imgs/device.png</normaloff>imgs/device.png</iconset>
+         <normaloff>../../../../../../../.designer/backup/imgs/device.png</normaloff>../../../../../../../.designer/backup/imgs/device.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Devices</string>
@@ -82,7 +82,7 @@
       <widget class="QWidget" name="tabMachines">
        <attribute name="icon">
         <iconset>
-         <normaloff>imgs/state-machine.png</normaloff>imgs/state-machine.png</iconset>
+         <normaloff>../../../../../../../.designer/backup/imgs/state-machine.png</normaloff>../../../../../../../.designer/backup/imgs/state-machine.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Machines</string>
@@ -144,7 +144,7 @@
       <widget class="QWidget" name="tabLinks">
        <attribute name="icon">
         <iconset>
-         <normaloff>imgs/link.png</normaloff>imgs/link.png</iconset>
+         <normaloff>../../../../../../../.designer/backup/imgs/link.png</normaloff>../../../../../../../.designer/backup/imgs/link.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Links</string>
@@ -196,6 +196,129 @@
             </layout>
            </widget>
           </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabSets">
+       <attribute name="icon">
+        <iconset>
+         <normaloff>../../../../../../../.designer/backup/imgs/sets.png</normaloff>../../../../../../../.designer/backup/imgs/sets.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>Sets</string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>-1</x>
+          <y>9</y>
+          <width>751</width>
+          <height>511</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="setHolder">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMaximumSize</enum>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" name="setControls"/>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="setThreee">
+           <item>
+            <widget class="QScrollArea" name="zoneScroll">
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetZone">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>241</width>
+                <height>495</height>
+               </rect>
+              </property>
+              <widget class="QWidget" name="verticalLayoutWidget_3">
+               <property name="geometry">
+                <rect>
+                 <x>40</x>
+                 <y>200</y>
+                 <width>160</width>
+                 <height>80</height>
+                </rect>
+               </property>
+               <layout class="QVBoxLayout" name="zoneHolderLayout">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMaximumSize</enum>
+                </property>
+               </layout>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QScrollArea" name="groupScroll">
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetGroup">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>241</width>
+                <height>495</height>
+               </rect>
+              </property>
+              <widget class="QWidget" name="verticalLayoutWidget_4">
+               <property name="geometry">
+                <rect>
+                 <x>40</x>
+                 <y>200</y>
+                 <width>160</width>
+                 <height>80</height>
+                </rect>
+               </property>
+               <layout class="QVBoxLayout" name="groupHolderLayout">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMaximumSize</enum>
+                </property>
+               </layout>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QScrollArea" name="fusorScroll">
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetFusor">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>241</width>
+                <height>495</height>
+               </rect>
+              </property>
+              <widget class="QWidget" name="verticalLayoutWidget_5">
+               <property name="geometry">
+                <rect>
+                 <x>40</x>
+                 <y>200</y>
+                 <width>160</width>
+                 <height>80</height>
+                </rect>
+               </property>
+               <layout class="QVBoxLayout" name="fusorHolderLayout"/>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>

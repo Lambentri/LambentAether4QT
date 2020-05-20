@@ -73,11 +73,21 @@ class Machine:
     iname: str = None
 
 
+class BPP(Enum):
+    RGB = "RGB"
+    GRB = "GRB"
+    RGBWW = "RGBWW"
+    RGBCW = "RGBCW"
+    RGBNW = "RGBNW"
+    RGBAW = "RGBAW"
+
+
 @dataclass
 class Device:
     iname: str
     id: str
     name: str
+    bpp: BPP = BPP.RGB
     updated: datetime = datetime.now()
 
     def update(self):
@@ -136,7 +146,7 @@ class LinkSink:
 
 
 class GenericComboBoxForm(QWidget):
-    def __init__(self, label: str, items: List, *args, **kwargs):
+    def __init__(self, label: str, items: List, default=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.items = items
@@ -144,6 +154,9 @@ class GenericComboBoxForm(QWidget):
         layout.addWidget(QLabel(label))
         self.box = QComboBox(self)
         self.box.addItems(items)
+        if default:
+            index = items.index(default)
+            self.box.setCurrentIndex(index)
         layout.addWidget(self.box)
 
         self.setLayout(layout)
@@ -208,11 +221,21 @@ class DeviceListControls(QWidget):
         pic_poke.mousePressEvent = self.on_poke
         layout.addWidget(pic_poke)
 
+        self.box_bpp = GenericComboBoxForm("", [i.value for i in BPP], default=device.bpp)
+        self.box_bpp.box.activated[str].connect(self.on_bpp_change)
+        layout.addWidget(self.box_bpp)
+
         self.setLayout(layout)
 
     def on_rename(self, event):
         dialog = DeviceNameDialog(self.device, session=self.session)
         dialog.exec()
+
+    @inlineCallbacks
+    def on_bpp_change(self, text):
+        yield self.session.call("com.lambentri.edge.la4.device.82667777.bpp", shortname=self.device.iname, bpp=text)
+        print("bpp", text)
+        self.box_bpp.box.setCurrentText(text)
 
     @inlineCallbacks
     def _on_poke(self):
@@ -741,7 +764,10 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             self.link_src_list[item['id']] = LinkSrc(**item)
 
         for item in sinks:
-            self.link_sink_list[item['id']] = LinkSink(**item)
+            _item = item.copy()
+            if "bpp" in _item:
+                _item.pop("bpp")
+            self.link_sink_list[item['id']] = LinkSink(**_item)
 
         # clear widget
         for item in range(1, self.linkHolderLayout.count()):
