@@ -155,7 +155,10 @@ class GenericComboBoxForm(QWidget):
         self.box = QComboBox(self)
         self.box.addItems(items)
         if default:
-            index = items.index(default)
+            if type(default) == str:
+                index = items.index(default)
+            else:
+                index = items.index(default.value)
             self.box.setCurrentIndex(index)
         layout.addWidget(self.box)
 
