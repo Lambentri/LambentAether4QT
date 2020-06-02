@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
+from dataclasses import asdict
 from datetime import datetime
+from pprint import pprint
 from sys import argv
 from functools import partial
 from typing import Dict, List, Callable
@@ -17,30 +19,42 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSignal
 import qt5reactor
+
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import task
 
 from src.main.python.config_ui import Ui_Dialog
 from src.main.python.main_ui import Ui_MainWindow
 
-from dataclasses import dataclass, asdict
+# from dataclasses import dataclass, asdict
+from pydantic.dataclasses import dataclass
 from aenum import Enum
 import configparser
 import os
 
+from src.main.python.widgets.machine.init import MachineInitVHolder, MachineSpec
 
-class TickEnum(Enum):
-    HUNDREDTHS = .01
-    FHUNDREDTHS = .05
-    TENTHS = .1
-    FTENTHS = .5
-    ONES = 1
-    TWOS = 2
-    FIVES = 5
-    TENS = 10
-    TWENTYS = 20
-    THIRTHYS = 30
-    MINS = 60
+SELECT_LABEL = "SELECT"
+
+
+class TickEnum(Enum, init=("count title")):
+    HUNDREDTHS = (.01, "HUNDREDTHS")
+    FHUNDREDTHS = (.05, "FHUNDREDTHS")
+    TENTHS = (.1, "TENTHS")
+    FTENTHS = (.5, "FTENTHS")
+    ONES = (1, "ONES")
+    TWOS = (2, "TWOS")
+    FIVES = (5, "FIVES")
+    TENS = (10, "TENS")
+    TWENTYS = (20, "TWENTYS")
+    THIRTHYS = (30, "THIRTYS")
+    MINS = (60, "MINS")
+
+    @classmethod
+    def _missing_value_(cls, name):
+        for member in cls:
+            if member.title == name:
+                return member
 
 
 class RunningEnum(Enum):
@@ -65,11 +79,12 @@ class BrightnessSliderEnum(Enum, init="slider enumv string"):
 @dataclass
 class Machine:
     name: str
-    speed: TickEnum
+
     running: RunningEnum
     id: str
     desc: str
 
+    speed: TickEnum = TickEnum.ONES
     iname: str = None
 
 
@@ -121,7 +136,7 @@ class LinkSpec:
 class Link:
     name: str
     active: bool
-    list_name: bool
+    list_name: str
     full_spec: LinkSpec
 
 
@@ -320,6 +335,9 @@ class MachineListHeader(QWidget):
 
 
 class MachineControlSpeedLayout(QWidget):
+    """
+    An embedded layout that lives inside the machine list, lets us have al the controls in the same place
+    """
     machine_plus = pyqtSignal(str)
     machine_minus = pyqtSignal(str)
 
@@ -343,7 +361,7 @@ class MachineControlSpeedLayout(QWidget):
 
         layout = QHBoxLayout()
         layout.addWidget(pic_minus)
-        layout.addWidget(QLabel(machine.speed))
+        layout.addWidget(QLabel(machine.speed.title))
         layout.addWidget(pic_plus)
         self.setLayout(layout)
 
@@ -455,7 +473,6 @@ class MachineListLayout(QWidget):
         iname.setToolTip(machine.id)
         layout.addWidget(iname)
 
-
         pm_remove = QPixmap('imgs/close-thick.png')
         pm_remove_painter = QPainter(pm_remove)
         pm_remove_painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
@@ -476,6 +493,74 @@ class MachineListLayout(QWidget):
     def on_remove(self, event):
         self.machine_rm.emit(self.machine.id)
 
+
+class MachineCreateDialog(QDialog):
+    def __init__(self, callable: Callable, session: ApplicationSession, *args, **kwargs):
+        super(MachineCreateDialog, self).__init__(*args, **kwargs)
+
+        self.setWindowTitle("New Machine")
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+
+        self.session = session
+
+        self.available_sources = session.machine_library
+        self.machine_source = GenericComboBoxForm("Machine Templates",
+                                                  [SELECT_LABEL] + [i for i in self.available_sources.keys()])
+        self.machine_source.box.activated[str].connect(self.on_selector_change)
+        self.layout.addWidget(self.machine_source)
+
+        self.vholder = MachineInitVHolder()
+        self.layout.addWidget(self.vholder)
+        #
+        # self.box_tgt = GenericComboBoxForm("Target", [i.listname for i in self.available_targets.values()])
+        # self.layout.addWidget(self.box_tgt)
+        #
+        # self.name_box = GenericTextEntryWithButton("Name", QIcon("imgs/refresh.png"), "Generate", callable)
+        # self.layout.addWidget(self.name_box)
+        self.layout.addWidget(self.buttonBox)
+
+        self.setLayout(self.layout)
+
+    def on_selector_change(self, value):
+        if value == SELECT_LABEL:
+            return
+
+        # clear * between the combobox / buttonbox
+        for item in range(self.vholder.layout.count()):
+            self.vholder.layout.itemAt(item).widget().deleteLater()
+
+        this_machine = self.available_sources[value]
+        for k, item in this_machine.conf.items():
+            pprint(item)
+            # this_spec = MachineSpecConfig(**item)
+            self.vholder.layout.addWidget(item.widget())
+
+        print("value", value)
+
+    @inlineCallbacks
+    def accept(self):
+        # selected_src = self.box_src.box.currentText()
+        # selected_src_spec = self.available_sources[self.available_sources_map[selected_src]]
+        #
+        # selected_tgt = self.box_tgt.box.currentText()
+        # selected_tgt_spec = self.available_targets[self.available_targets_map[selected_tgt]]
+        # yield self.session.call("com.lambentri.edge.la4.links.save",
+        #                         link_name=self.name_box.line_edit.text(),
+        #                         link_spec={
+        #                             "source": asdict(selected_src_spec),
+        #                             "target": asdict(selected_tgt_spec)
+        #                         }
+        #                         )
+
+        return super().accept()
+
+
 class LinkListHeader(QWidget):
 
     def __init__(self, *args, **kwargs):
@@ -487,6 +572,7 @@ class LinkListHeader(QWidget):
         layout.addWidget(QLabel("Target"))
         layout.addWidget(QLabel())
         self.setLayout(layout)
+
 
 class LinkControlToggleLayout(QWidget):
     link_toggle = pyqtSignal(str)
@@ -528,10 +614,6 @@ class LinkControlToggleLayout(QWidget):
         pic_switch.setPixmap(pm_switch)
 
         layout.addWidget(pic_switch)
-        
-
-
-
 
         self.setLayout(layout)
 
@@ -579,8 +661,8 @@ class LinkListLayout(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(QLabel(link.name))
-        layout.addWidget(QLabel(link.full_spec['source']['listname']))
-        layout.addWidget(QLabel(link.full_spec['target']['listname']))
+        layout.addWidget(QLabel(link.full_spec.source.listname))
+        layout.addWidget(QLabel(link.full_spec.target.listname))
         self.layout_controls = LinkControlToggleLayout(link)
         layout.addWidget(self.layout_controls)
 
@@ -641,6 +723,7 @@ class LinkCreateDialog(QDialog):
 
 class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
     machine_list: Dict[str, Machine] = dict()
+    machine_library: Dict[str, MachineSpec] = dict()
     device_list: Dict[str, Device] = dict()
     link_list: Dict[str, Link] = dict()
     link_src_list: Dict[str, LinkSrc] = dict()
@@ -677,6 +760,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
 
         self.controls_machine = MachineListControls()
         self.controls_machine.machine_brightness_set.connect(self.on_machine_brightness_set)
+        self.controls_machine.newButton.mousePressEvent = self.pressed_new_machine_dialog
         self.machineControls.addWidget(self.controls_machine)
 
         self.controls_link = LinkListControls()
@@ -724,6 +808,20 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
         except ApplicationError:
             print("missing remote machine component")
 
+        try:
+            machine_library = yield self.call("com.lambentri.edge.la4.machine.library")  # type: Dict[str, Dict]
+            for machine_id, spec in machine_library.items():
+                try:
+                    # pprint(spec)
+                    self.machine_library[machine_id] = MachineSpec(**spec)
+                except Exception as e:
+                    print(e)
+            # machine_list = machine_list_and_enums['machines']
+            # for machine_id, spec in machine_list.items():
+            #     self.machine_list[machine_id] = Machine(**spec)
+        except ApplicationError:
+            print("missing remote machine component")
+
         return
 
     def machine_write(self):
@@ -761,6 +859,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
         # print(sinks)
         # print(srcs)
         for key, item in links.items():
+            # print(item)
             self.link_list[key] = Link(**item)
 
         for item in srcs:
@@ -786,6 +885,11 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
     def pressed_new_link_dialog(self, event):
         print("clicky-new-link")
         dialog = LinkCreateDialog(self.generate_name_callable, session=self)
+        dialog.exec()
+
+    def pressed_new_machine_dialog(self, event):
+        print("clicky-new-machine")
+        dialog = MachineCreateDialog(self.generate_name_callable, session=self)
         dialog.exec()
 
     @inlineCallbacks
@@ -874,6 +978,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             del self.link_list[link_id]
         except:
             raise
+
 
 class LambentConfigWindow(QMainWindow, Ui_Dialog):
     def __init__(self, config=None):
