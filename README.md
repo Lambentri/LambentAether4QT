@@ -1,5 +1,7 @@
 # Lambent 4QT
 
+[![Gitter](https://badges.gitter.im/Lambentri/community.svg)](https://gitter.im/Lambentri/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 A QT Interface for Lambent4
 
 ## Features
