@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pprint
 from sys import argv
 from functools import partial
@@ -14,7 +14,7 @@ from autobahn.wamp.types import PublishOptions
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QIcon
 from PyQt5.QtWidgets import qApp, QLabel, QHBoxLayout, QWidget, QSlider, QSpacerItem, QLineEdit, QPushButton, QDialog, \
-    QDialogButtonBox, QVBoxLayout, QComboBox
+    QDialogButtonBox, QVBoxLayout, QComboBox, QGroupBox, QCheckBox
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSignal
@@ -35,6 +35,16 @@ import os
 from src.main.python.widgets.machine.init import MachineInitVHolder, MachineSpec
 
 SELECT_LABEL = "SELECT"
+
+BRIGHTNESS_TO_POSITION = {
+    0: 0,
+    3: 1,
+    7: 2,
+    15: 3,
+    31: 4,
+    63: 5,
+    127: 6,
+    255: 7}
 
 
 class TickEnum(Enum, init=("count title")):
@@ -63,11 +73,13 @@ class RunningEnum(Enum):
 
 
 class BrightnessSliderEnum(Enum, init="slider enumv string"):
-    FULL = (5, 1, "100%")
-    HALF = (4, 2, "50%")
-    QUARTER = (3, 4, "25%")
-    PCT_TEN = (2, 10, "10%")
-    PCT_FIVE = (1, 20, "5%")
+    FULL = (7, 255, "100%")
+    HALF = (6, 127, "50%")
+    QUARTER = (5, 63, "25%")
+    EIGHTH = (4, 31, "12.5%")
+    SIXTEENTH = (3, 15, "6.25%")
+    THIRTY2ND = (2, 7, "3.125%")
+    SIXTYFOURTH = (1, 3, "1.5%")
     OFF = (0, 0, "0%")
 
     def _missing_value_(key):
@@ -111,7 +123,7 @@ class Device:
 
 @dataclass
 class LinkSpecSrc:
-    listname: str
+    list_name: str
     ttl: str
     id: str
     cls: str
@@ -119,7 +131,7 @@ class LinkSpecSrc:
 
 @dataclass
 class LinkSpecTgt:
-    listname: str
+    list_name: str
     grp: str
     iname: str
     id: str
@@ -142,7 +154,7 @@ class Link:
 
 @dataclass
 class LinkSrc:
-    listname: str
+    list_name: str
     ttl: str
     id: str
     cls: str
@@ -150,7 +162,7 @@ class LinkSrc:
 
 @dataclass
 class LinkSink:
-    listname: str
+    list_name: str
     grp: str
     iname: str
     id: str
@@ -404,9 +416,9 @@ class MachineListControls(QWidget):
         ## Brightness Slider
         layout.addWidget(QLabel("Global Brightness"))
         self.bslider = QSlider(QtCore.Qt.Horizontal, self)
-        self.bslider.setRange(0, 5)
+        self.bslider.setRange(0, 7)
         self.bslider.setSingleStep(1)
-        self.bslider.setValue(5)
+        self.bslider.setValue(7)
         self.bslider.valueChanged[int].connect(self.slider_value_changed)
         layout.addWidget(self.bslider)
 
@@ -518,7 +530,7 @@ class MachineCreateDialog(QDialog):
         self.vholder = MachineInitVHolder()
         self.layout.addWidget(self.vholder)
         #
-        # self.box_tgt = GenericComboBoxForm("Target", [i.listname for i in self.available_targets.values()])
+        # self.box_tgt = GenericComboBoxForm("Target", [i.list_name for i in self.available_targets.values()])
         # self.layout.addWidget(self.box_tgt)
         #
         # self.name_box = GenericTextEntryWithButton("Name", QIcon("imgs/refresh.png"), "Generate", callable)
@@ -640,13 +652,24 @@ class LinkListControls(QWidget):
         self.newButton.setToolTip("New Link")
         self.newButton.setIcon(pm_plus)
         self.newButton.clicked.connect(self.new_button_clicked)
+
+        pm_plus_more = QIcon('imgs/plus-list.png')
+        self.newMoreButton = QPushButton()
+        self.newMoreButton.setToolTip("New Link (bulk)")
+        self.newMoreButton.setIcon(pm_plus_more)
+        self.newMoreButton.clicked.connect(self.new_button_clicked_bulk)
+
         layout.addWidget(self.newButton)
+        layout.addWidget(self.newMoreButton)
         layout.addSpacerItem(QSpacerItem(0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum))
 
         self.setLayout(layout)
 
     def new_button_clicked(self):
         print("new_button_clicked")
+
+    def new_button_clicked_bulk(self):
+        print("new_button_clicked_bulk")
 
 
 class LinkListLayout(QWidget):
@@ -661,8 +684,8 @@ class LinkListLayout(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(QLabel(link.name))
-        layout.addWidget(QLabel(link.full_spec.source.listname))
-        layout.addWidget(QLabel(link.full_spec.target.listname))
+        layout.addWidget(QLabel(link.full_spec.source.list_name))
+        layout.addWidget(QLabel(link.full_spec.target.list_name))
         self.layout_controls = LinkControlToggleLayout(link)
         layout.addWidget(self.layout_controls)
 
@@ -683,18 +706,19 @@ class LinkCreateDialog(QDialog):
         self.layout = QVBoxLayout()
 
         self.session = session
+        self.name_callable = callable
 
         self.available_sources = session.link_src_list
-        self.available_sources_map = {i.listname: i.id for i in self.available_sources.values()}
+        self.available_sources_map = {i.list_name: i.id for i in self.available_sources.values()}
 
         self.available_targets = session.link_sink_list
-        self.available_targets_map = {i.listname: i.id for i in self.available_targets.values()}
+        self.available_targets_map = {i.list_name: i.id for i in self.available_targets.values()}
 
         # target pair
-        self.box_src = GenericComboBoxForm("Source", [i.listname for i in self.available_sources.values()])
+        self.box_src = GenericComboBoxForm("Source", [i.list_name for i in self.available_sources.values()])
         self.layout.addWidget(self.box_src)
 
-        self.box_tgt = GenericComboBoxForm("Target", [i.listname for i in self.available_targets.values()])
+        self.box_tgt = GenericComboBoxForm("Target", [i.list_name for i in self.available_targets.values()])
         self.layout.addWidget(self.box_tgt)
 
         self.name_box = GenericTextEntryWithButton("Name", QIcon("imgs/refresh.png"), "Generate", callable)
@@ -705,11 +729,14 @@ class LinkCreateDialog(QDialog):
 
     @inlineCallbacks
     def accept(self):
+        if not self.name_box.line_edit.text():
+            self.name_box.do_button_callable(None)
+            return
         selected_src = self.box_src.box.currentText()
-        selected_src_spec = self.available_sources[self.available_sources_map[selected_src]]
+        selected_src_spec: LinkSrc = self.available_sources[self.available_sources_map[selected_src]]
 
         selected_tgt = self.box_tgt.box.currentText()
-        selected_tgt_spec = self.available_targets[self.available_targets_map[selected_tgt]]
+        selected_tgt_spec: LinkSink = self.available_targets[self.available_targets_map[selected_tgt]]
         yield self.session.call("com.lambentri.edge.la4.links.save",
                                 link_name=self.name_box.line_edit.text(),
                                 link_spec={
@@ -721,6 +748,73 @@ class LinkCreateDialog(QDialog):
         return super().accept()
 
 
+class LinkCreateBulkDialog(QDialog):
+    def on_groupbox_toggle(self, on):
+        for box in self.sender().findChildren(QCheckBox):
+            box.setChecked(on)
+            box.setEnabled(True)
+
+    def __init__(self, callable: Callable, session: ApplicationSession, *args, **kwargs):
+        super(LinkCreateBulkDialog, self).__init__(*args, **kwargs)
+
+        self.setWindowTitle("New Link Bulk")
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+
+        self.session = session
+        self.name_callable = callable
+
+        self.available_sources = session.link_src_list
+        self.available_sources_map = {i.list_name: i.id for i in self.available_sources.values()}
+
+        self.available_targets = session.link_sink_list
+        self.available_targets_map = {i.list_name: i.id for i in self.available_targets.values()}
+
+        self.box_src = GenericComboBoxForm("Source", [i.list_name for i in self.available_sources.values()])
+        self.layout.addWidget(self.box_src)
+
+
+        # when zones are implemented, groupbox per zone
+        self.target_list = QVBoxLayout()
+        self.groupbox = QGroupBox("Target List")
+        self.groupbox.setCheckable(True)
+        self.groupbox.setLayout(self.target_list)
+        self.groupbox.toggled.connect(self.on_groupbox_toggle)
+
+        for i in self.available_targets.values():
+            checkbox = QCheckBox(i.name)
+            checkbox.item = i
+            self.target_list.addWidget(checkbox)
+        self.layout.addWidget(self.groupbox)
+        self.name_box = GenericTextEntryWithButton("Name", QIcon("imgs/refresh.png"), "Generate", callable)
+        self.layout.addWidget(self.name_box)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    @inlineCallbacks
+    def accept(self):
+        if not self.name_box.line_edit.text():
+            self.name_box.do_button_callable(None)
+            return
+        selected_src = self.box_src.box.currentText()
+        selected_src_spec: LinkSrc = self.available_sources[self.available_sources_map[selected_src]]
+
+        selected_tgts = [i.item for i in self.groupbox.findChildren(QCheckBox) if i.isChecked()]
+        yield self.session.call("com.lambentri.edge.la4.links.save_bulk",
+                                link_name=self.name_box.line_edit.text(),
+                                link_spec={
+                                    "source": asdict(selected_src_spec),
+                                    "targets": [asdict(t) for t in selected_tgts]
+                                }
+                                )
+
+        return super().accept()
+
 class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
     machine_list: Dict[str, Machine] = dict()
     machine_library: Dict[str, MachineSpec] = dict()
@@ -731,9 +825,13 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
 
     controls_machine: MachineListControls
 
+    brightness_dbnc: datetime
+
     def __init__(self, config=None):
         QMainWindow.__init__(self)
         ApplicationSession.__init__(self, config)
+
+        self.brightness_dbnc = datetime.now()
 
         self.setupUi(self)
 
@@ -765,6 +863,8 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
 
         self.controls_link = LinkListControls()
         self.controls_link.newButton.mousePressEvent = self.pressed_new_link_dialog
+        self.controls_link.newMoreButton.mousePressEvent = self.pressed_new_link_bulk_dialog
+
         self.linkControls.addWidget(self.controls_link)
         self.linkControls
         # self.machineHolderLayout.addWidget(MachineListHeader())
@@ -783,6 +883,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
 
         self.subscribe(self.device_listener, "com.lambentri.edge.la4.machine.sink.8266-7777")
         self.subscribe(self.link_listener, "com.lambentri.edge.la4.links")
+        self.subscribe(self.brightness_listener, "com.lambentri.edge.la4.machine.gb")
 
     def onDisconnect(self):
         self.statusbar.showMessage("LAMBENT 4 - Disconnected")
@@ -882,9 +983,21 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             this_item.layout_controls.link_toggle.connect(self.on_link_toggle)
             self.linkHolderLayout.addWidget(this_item)
 
+    def brightness_listener(self, *args, **kwargs):
+        print("brightness-global-change")
+        if self.brightness_dbnc > datetime.now() + timedelta(seconds=1):
+            bvalue = kwargs.get("brightness")
+            self.controls_machine.bslider.setValue(BRIGHTNESS_TO_POSITION[bvalue])
+            self.brightness_dbnc = datetime.now()
+
     def pressed_new_link_dialog(self, event):
         print("clicky-new-link")
         dialog = LinkCreateDialog(self.generate_name_callable, session=self)
+        dialog.exec()
+
+    def pressed_new_link_bulk_dialog(self, event):
+        print("clicky-new-link-bulk")
+        dialog = LinkCreateBulkDialog(self.generate_name_callable, session=self)
         dialog.exec()
 
     def pressed_new_machine_dialog(self, event):
