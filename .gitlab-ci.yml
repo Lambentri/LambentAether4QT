@@ -20,11 +20,12 @@ build-win:
   tags:
     - windows
   script:
-    # for starters: choco install vcbuildtools, vcredist2010,vcredist2012 -x86 add C:\Windows\SysWOW64\ to windows path and reboot
+    # for starters: choco install nsis vcbuildtools, vcredist2010,vcredist2012 -x86 add C:\Windows\SysWOW64\ to windows path and reboot
     # and then choco install python3 --version=3.6.8
     # and choco install git --params "/GitAndUnixToolsOnPath"
     - C:\Python36\python.exe -m venv venv
     - $env:Path += ";C:\Windows\System32\downlevel"
+    - $env:Path += ";C:\Program Files (x86)\NSIS"
     - .\venv\Scripts\activate.bat
     - pip install --upgrade pip wheel --user
     - pip install -r requirements.txt --user
