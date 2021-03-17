@@ -1011,7 +1011,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
                 _item.pop("bpp")
             self.link_sink_list[item['id']] = LinkSink(**_item)
 
-        # clear widget
+        # clear widgetmachine
         for item in range(1, self.linkHolderLayout.count()):
             self.linkHolderLayout.itemAt(item).widget().deleteLater()
         # redraw
@@ -1153,12 +1153,16 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
             raise
 
 
-class LambentConfigWindow(QMainWindow, Ui_Dialog):
+class LambentConfigWindow(Ui_Dialog):
     def __init__(self, config=None):
         QMainWindow.__init__(self)
-        ApplicationSession.__init__(self, config)
-
         self.setupUi(self)
+
+    def accept(self):
+        pass
+
+    def reject(self):
+        pass
 
 
 def make(config):
@@ -1186,9 +1190,13 @@ def main():
     app = QApplication(argv)
     qt5reactor.install()
 
-    if not args.url or not "url" in config.options("gui"):
+    if not args.url or not config.has_option("gui", "url"):
         print("missing config file/parmas")
-        return
+        configurator = QDialog()
+        configurator.ui = LambentConfigWindow()
+        configurator.ui.setupUi(configurator)
+        configurator.exec_()
+
     elif "url" in "url" in config.options("gui"):
         print("found config")
         runner = ApplicationRunner(config.get("gui", "url"), u'realm1', extra=vars(args))

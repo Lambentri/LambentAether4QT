@@ -29,7 +29,7 @@ build-win:
     - .\venv\Scripts\activate.bat
     - pip install --upgrade pip wheel --user
     - pip install -r requirements.txt --user
-    - fbs freeze --debug
+    - fbs freeze
     - fbs installer
     - dir target
     
