@@ -35,4 +35,7 @@ build-win:
     
   only:
     - master
+  artifacts:
+    paths:
+      - target/Lambent4QtSetup.exe
 
