@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1151</width>
+    <height>769</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,12 +21,12 @@
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="tabMain">
        <attribute name="icon">
         <iconset>
-         <normaloff>../../../../../../../.designer/backup/imgs/overview.png</normaloff>../../../../../../../.designer/backup/imgs/overview.png</iconset>
+         <normaloff>imgs/overview.png</normaloff>imgs/overview.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Overview</string>
@@ -35,54 +35,57 @@
       <widget class="QWidget" name="tabDevices">
        <attribute name="icon">
         <iconset>
-         <normaloff>../../../../../../../.designer/backup/imgs/device.png</normaloff>../../../../../../../.designer/backup/imgs/device.png</iconset>
+         <normaloff>imgs/device.png</normaloff>imgs/device.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Devices</string>
        </attribute>
-       <widget class="QScrollArea" name="deviceScroll">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>751</width>
-          <height>531</height>
-         </rect>
-        </property>
-        <property name="widgetResizable">
-         <bool>true</bool>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-        </property>
-        <widget class="QWidget" name="scrollAreaWidgeDevice">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>747</width>
-           <height>527</height>
-          </rect>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <layout class="QVBoxLayout" name="deviceHolder" stretch="0,0">
           <property name="sizeConstraint">
-           <enum>QLayout::SetMaximumSize</enum>
+           <enum>QLayout::SetDefaultConstraint</enum>
           </property>
           <item>
-           <layout class="QVBoxLayout" name="deviceHolderLayout">
-            <property name="sizeConstraint">
-             <enum>QLayout::SetMaximumSize</enum>
+           <layout class="QHBoxLayout" name="deviceControls"/>
+          </item>
+          <item>
+           <widget class="QScrollArea" name="deviceScroll">
+            <property name="widgetResizable">
+             <bool>true</bool>
             </property>
-           </layout>
+            <widget class="QWidget" name="scrollAreaWidgetDevice">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>733</width>
+               <height>501</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetMaximumSize</enum>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="deviceHolderLayout">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMaximumSize</enum>
+                </property>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </widget>
           </item>
          </layout>
-        </widget>
-       </widget>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tabMachines">
        <attribute name="icon">
         <iconset>
-         <normaloff>../../../../../../../.designer/backup/imgs/state-machine.png</normaloff>../../../../../../../.designer/backup/imgs/state-machine.png</iconset>
+         <normaloff>imgs/state-machine.png</normaloff>imgs/state-machine.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Machines</string>
@@ -109,7 +112,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>735</width>
+               <width>733</width>
                <height>501</height>
               </rect>
              </property>
@@ -144,66 +147,57 @@
       <widget class="QWidget" name="tabLinks">
        <attribute name="icon">
         <iconset>
-         <normaloff>../../../../../../../.designer/backup/imgs/link.png</normaloff>../../../../../../../.designer/backup/imgs/link.png</iconset>
+         <normaloff>imgs/link.png</normaloff>imgs/link.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Links</string>
        </attribute>
-       <widget class="QWidget" name="verticalLayoutWidget_2">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>731</width>
-          <height>511</height>
-         </rect>
-        </property>
-        <layout class="QVBoxLayout" name="linkHolder">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetMaximumSize</enum>
-         </property>
-         <item>
-          <layout class="QHBoxLayout" name="linkControls"/>
-         </item>
-         <item>
-          <widget class="QScrollArea" name="linkScroll">
-           <property name="widgetResizable">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-           <widget class="QWidget" name="scrollAreaWidgetLinks">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>725</width>
-              <height>497</height>
-             </rect>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <layout class="QVBoxLayout" name="linkHolder">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetMaximumSize</enum>
+          </property>
+          <item>
+           <layout class="QHBoxLayout" name="linkControls"/>
+          </item>
+          <item>
+           <widget class="QScrollArea" name="linkScroll">
+            <property name="widgetResizable">
+             <bool>true</bool>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
-             <property name="sizeConstraint">
-              <enum>QLayout::SetMaximumSize</enum>
+            <widget class="QWidget" name="scrollAreaWidgetLinks">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>1084</width>
+               <height>670</height>
+              </rect>
              </property>
-             <item>
-              <layout class="QVBoxLayout" name="linkHolderLayout">
-               <property name="sizeConstraint">
-                <enum>QLayout::SetMaximumSize</enum>
-               </property>
-              </layout>
-             </item>
-            </layout>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetMaximumSize</enum>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="linkHolderLayout">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMaximumSize</enum>
+                </property>
+               </layout>
+              </item>
+             </layout>
+            </widget>
            </widget>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tabSets">
        <attribute name="icon">
         <iconset>
-         <normaloff>../../../../../../../.designer/backup/imgs/sets.png</normaloff>../../../../../../../.designer/backup/imgs/sets.png</iconset>
+         <normaloff>imgs/sets.png</normaloff>imgs/sets.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Sets</string>
@@ -332,7 +326,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1151</width>
      <height>30</height>
     </rect>
    </property>

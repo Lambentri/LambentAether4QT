@@ -107,6 +107,7 @@ class BPP(Enum):
     RGBCW = "RGBCW"
     RGBNW = "RGBNW"
     RGBAW = "RGBAW"
+    RGBXW = "RGBXW"
 
 
 @dataclass
@@ -236,6 +237,7 @@ class DeviceListControls(QWidget):
         self.session = session
 
         layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
         pm_rename = QPixmap('imgs/rename-box.png')
         pic_rename = QLabel()
@@ -279,6 +281,28 @@ class DeviceListControls(QWidget):
         self._on_poke()
         print("qqq")
         return
+
+class DeviceListHeaderControls(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        layout = QHBoxLayout()
+
+        ## New Button
+        pm_plus = QIcon('imgs/flash-alert.png')
+        self.scanButton = QPushButton()
+        self.scanButton.setToolTip("Queue Rescan")
+        self.scanButton.setIcon(pm_plus)
+        self.scanButton.clicked.connect(self.new_button_clicked)
+        layout.addWidget(self.scanButton)
+
+        layout.addSpacerItem(QSpacerItem(0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum))
+
+        self.setLayout(layout)
+
+    def new_button_clicked(self):
+        print("scan_button_clicked")
+
 
 
 class DeviceListLayout(QWidget):
@@ -644,9 +668,7 @@ class LinkListControls(QWidget):
         super().__init__(*args, **kwargs)
 
         layout = QHBoxLayout()
-        # layout.addWidget(QSpacerItem())
 
-        ## New Button
         pm_plus = QIcon('imgs/plus.png')
         self.newButton = QPushButton()
         self.newButton.setToolTip("New Link")
@@ -663,6 +685,13 @@ class LinkListControls(QWidget):
         layout.addWidget(self.newMoreButton)
         layout.addSpacerItem(QSpacerItem(0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum))
 
+        pm_nuke = QIcon('imgs/nuke.png')
+        self.clearButton = QPushButton()
+        self.clearButton.setToolTip("Remove All Links")
+        self.clearButton.setIcon(pm_nuke)
+        self.clearButton.clicked.connect(self.nuke_button_clicked)
+        layout.addWidget(self.clearButton)
+
         self.setLayout(layout)
 
     def new_button_clicked(self):
@@ -670,6 +699,9 @@ class LinkListControls(QWidget):
 
     def new_button_clicked_bulk(self):
         print("new_button_clicked_bulk")
+
+    def nuke_button_clicked(self):
+        print("nuke_button_clicked")
 
 
 class LinkListLayout(QWidget):
@@ -856,17 +888,22 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
         self.machineHolderLayout.addWidget(MachineListHeader())
         self.linkHolderLayout.addWidget(LinkListHeader())
 
+        self.controls_device = DeviceListHeaderControls()
+        self.controls_device.scanButton.mousePressEvent = self.pressed_device_rescan
+        self.deviceControls.addWidget(self.controls_device)
+
         self.controls_machine = MachineListControls()
         self.controls_machine.machine_brightness_set.connect(self.on_machine_brightness_set)
         self.controls_machine.newButton.mousePressEvent = self.pressed_new_machine_dialog
+
         self.machineControls.addWidget(self.controls_machine)
 
         self.controls_link = LinkListControls()
         self.controls_link.newButton.mousePressEvent = self.pressed_new_link_dialog
         self.controls_link.newMoreButton.mousePressEvent = self.pressed_new_link_bulk_dialog
+        self.controls_link.clearButton.mousePressEvent = self.pressed_nuke_link_button
 
         self.linkControls.addWidget(self.controls_link)
-        self.linkControls
         # self.machineHolderLayout.addWidget(MachineListHeader())
 
     # @inlineCallbacks
@@ -904,6 +941,7 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
         try:
             machine_list_and_enums = yield self.call("com.lambentri.edge.la4.machine.list")  # type: Dict[str, Dict]
             machine_list = machine_list_and_enums['machines']
+            print(machine_list)
             for machine_id, spec in machine_list.items():
                 self.machine_list[machine_id] = Machine(**spec)
         except ApplicationError:
@@ -952,9 +990,10 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
         for item in range(1, self.deviceHolderLayout.count()):
             self.deviceHolderLayout.itemAt(item).widget().deleteLater()
         # redraw
-        for item in self.device_list.values():
+        for item in sorted(self.device_list.values(), key=lambda x:x.name):
             this_item = DeviceListLayout(item, self)
             self.deviceHolderLayout.addWidget(this_item)
+
 
     def link_listener(self, links: Dict[str, str], sinks: List, srcs: List):
         # print(sinks)
@@ -1004,6 +1043,27 @@ class LambentSessionWindow(QMainWindow, Ui_MainWindow, ApplicationSession):
         print("clicky-new-machine")
         dialog = MachineCreateDialog(self.generate_name_callable, session=self)
         dialog.exec()
+
+    @inlineCallbacks
+    def _pressed_device_rescan(self):
+        print("clicky-device-rescan")
+        yield self.call("com.lambentri.edge.la4.device.82667777.rescan")
+
+    def pressed_device_rescan(self, event):
+        self._pressed_device_rescan()
+        return None
+
+    @inlineCallbacks
+    def _call_link_destroyer(self):
+        yield self.call("com.lambentri.edge.la4.links.destroy_all")
+        try:
+            self.link_list = {}
+        except:
+            raise
+
+    def pressed_nuke_link_button(self, event):
+        self._call_link_destroyer()
+        return None
 
     @inlineCallbacks
     def generate_name_callable(self):
