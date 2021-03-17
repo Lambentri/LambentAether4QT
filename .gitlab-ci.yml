@@ -24,7 +24,7 @@ build-win:
     # and then choco install python3 --version=3.6.8
     # and choco install git --params "/GitAndUnixToolsOnPath"
     - C:\Python36\python.exe -m venv venv
-    - set PATH=%PATH%;C:\Windows\System32\downlevel
+    - $env:Path += ";C:\Windows\System32\downlevel"
     - .\venv\Scripts\activate.bat
     - pip install --upgrade pip wheel --user
     - pip install -r requirements.txt --user
